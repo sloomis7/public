@@ -15,6 +15,9 @@
 #import "AppDelegate.h"
 #import "SATVC.h"
 
+#define kSchoolsURL @"https://data.cityofnewyork.us/resource/s3k6-pzi2.json"
+#define kSATSURL @"https://data.cityofnewyork.us/resource/f9bf-2cp4.json"
+
 
 @interface ViewController (){
     
@@ -25,6 +28,9 @@
     ItemCell * itemLayoutCell;
     
     AppDelegate * appDelegate;
+    
+    NSOperationQueue * operationQueue;
+    BOOL WSLoaded;
 }
 
 @end
@@ -46,47 +52,23 @@
     sats = [[NSMutableArray alloc]init];
     satsDict = [[NSMutableDictionary alloc]init];
     
-    NSArray * schoolsJSON = [WebService getJSONData:@"mock"];
-    NSArray * satsJSON = [WebService getJSONData:@"mock2"];
+    operationQueue = [[NSOperationQueue alloc]init];
+    
+    [operationQueue addObserver:self forKeyPath:@"operations" options:0 context:nil];
+    
+    [operationQueue addOperationWithBlock:^{
+        [WebService getSchools:kSchoolsURL schoolsArray:schools];
+        
+    }];
+    
+    [operationQueue addOperationWithBlock:^{
+        [WebService getSATS:kSATSURL satsArray:sats];
+    }];
+    
 
     
-    if (schoolsJSON && schoolsJSON.count > 0) {
-        
-        //Parse JSON file into data model objects, set into an array
-        for(NSDictionary * dict in schoolsJSON){
-            
-            School * newSchool = [School createNewSchool:dict];
-            
-            if(newSchool){
-                [schools addObject:newSchool];
-            }
-            
-        }
-        
-    }
     
-    if (satsJSON && satsJSON.count > 0) {
-        
-        //Parse JSON file into data model objects, set into an array
-        for(NSDictionary * dict in satsJSON){
-            
-            SAT * newSAT = [SAT createNewSAT:dict];
-            
-            if (newSAT) {
-                [sats addObject:newSAT];
-
-            }
-            
-        }
-        
-        for (SAT * sat in sats){
-            
-            [satsDict setObject:sat forKey:sat.schoolID];
-            
-        }
-    }
     
-    [tableView reloadData];
 
     
    
@@ -188,5 +170,29 @@
     return  [self calculateHeightForConfiguredCell:itemLayoutCell];
 }
 
+#pragma mark
+
+-(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context{
+    
+    
+    if ([object isKindOfClass:[NSOperationQueue class]]) {
+        
+        NSOperationQueue * opQueue = (NSOperationQueue*)object;
+        if (opQueue.operations.count == 0 && !WSLoaded) {
+            
+            for (SAT * sat in sats){
+                
+                [satsDict setObject:sat forKey:sat.schoolID];
+                
+            }
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [tableView reloadData];
+            });
+            WSLoaded = YES;
+        }
+    }
+    
+}
 
 @end

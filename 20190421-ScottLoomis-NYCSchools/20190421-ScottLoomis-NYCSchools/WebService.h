@@ -12,4 +12,7 @@
 
 +(NSArray*)getJSONData:(NSString*)path;
 
++(void)getSchools:(NSString*)path schoolsArray:(NSMutableArray*)schools;
++(void)getSATS:(NSString*)path satsArray:(NSMutableArray*)sats;
+
 @end
