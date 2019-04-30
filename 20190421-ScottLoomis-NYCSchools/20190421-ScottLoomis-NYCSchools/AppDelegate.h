@@ -12,6 +12,11 @@
 
 @property (strong, nonatomic) UIWindow *window;
 @property (strong, nonatomic) UINavigationController* mainNavVC;
-//test4
+
+
 @end
+
+//Commit Note:
+// I figured it out, Xcode grabs any git hub account associated with the email listed in Preferences -> Source Code -> Author Email field
+//In my case it was an old email address associated with an abandoned personal github test account.
 
